@@ -1,6 +1,6 @@
-import mongoose, { modelNames, Schema } from "mongoose";
+import mongoose, { Schema } from "mongoose";
 import brcypt from "bcrypt";
-import jwt from "jsonwebtoken"; 
+import jwt from "jsonwebtoken";
 import crypto from "crypto";
 
 const userSchema = new Schema(
@@ -63,12 +63,17 @@ const userSchema = new Schema(
   },
 );
 
-//pre-save middleware
-userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
+
+// userSchema.pre("save", async function (next) {
+//   if (!this.isModified("password")) return next();
+
+//   this.password = await brcypt.hash(this.password, 10);
+//   next();
+// });
+userSchema.pre("save", async function () {
+  if (!this.isModified("password")) return;
 
   this.password = await brcypt.hash(this.password, 10);
-  next();
 });
 
 userSchema.methods.isPasswordCorrect = async function (password) {
@@ -77,7 +82,6 @@ userSchema.methods.isPasswordCorrect = async function (password) {
 
 userSchema.methods.generateAccessToken = function () {
   return jwt.sign(
-    //payload
     {
       _id: this._id,
       email: this.email,
@@ -110,6 +114,4 @@ userSchema.methods.generateTemporaryToken = function () {
   return { unHashedToken, hashedToken, tokenExpiry };
 };
 
-
 export const User = mongoose.model("User", userSchema);
-
